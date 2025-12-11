@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>벽돌깨기 + 아이템</title>
+<style>
+  body{margin:0;background:#0f1724;color:white;font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh}
+  .wrap{width:90vw;max-width:900px;aspect-ratio:16/9;position:relative}
+  canvas{width:100%;height:100%;background:#000;border-radius:8px}
+  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);font-size:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="game"></canvas>
+  <div id="overlay">클릭 또는 스페이스로 시작</div>
+</div>
+<script>
+const c=document.getElementById("game");const ctx=c.getContext("2d");let W,H;
+function resize(){let r=c.getBoundingClientRect();W=c.width=r.width;H=c.height=r.height;}window.addEventListener("resize",resize);resize();
+
+let paddle={w:120,h:12,x:0,y:0,baseW:120};
+let ballList=[];
+function newBall(x,y,vx,vy){return {x,y,vx,vy,r:8}};
+let bricks=[];const rows=5,cols=9;
+let items=[]; // {x,y,vy,type}
+let started=false;
+let score=0;
+
+let effects={
+  longPaddle:false,
+  slowBall:false,
+  shield:false,
+  doubleScore:false
+};
+let timers={};
+
+function activate(type){
+  if(type=="long"){paddle.w=200;effects.longPaddle=true;clearTimeout(timers.long);timers.long=setTimeout(()=>{effects.longPaddle=false;paddle.w=paddle.baseW;},5000);} 
+  if(type=="slow"){ballList.forEach(b=>{b.vx*=0.5;b.vy*=0.5});effects.slowBall=true;clearTimeout(timers.slow);timers.slow=setTimeout(()=>{effects.slowBall=false;ballList.forEach(b=>{b.vx*=2;b.vy*=2});},5000);} 
+  if(type=="shield"){effects.shield=true;clearTimeout(timers.shield);timers.shield=setTimeout(()=>effects.shield=false,10000);} 
+  if(type=="multi"){let nb=[];ballList.forEach(b=>{nb.push(newBall(b.x,b.y,-b.vx,b.vy));nb.push(newBall(b.x,b.y,b.vx,-b.vy));});ballList.push(...nb);} 
+  if(type=="double"){effects.doubleScore=true;clearTimeout(timers.double);timers.double=setTimeout(()=>effects.doubleScore=false,10000);} 
+}
+
+function itemType(){let t=["long","slow","shield","multi","double"];return t[Math.floor(Math.random()*t.length)];}
+
+function init(){paddle.w=paddle.baseW;paddle.x=W/2-paddle.w/2;paddle.y=H-30;
+  ballList=[newBall(W/2,paddle.y-20,4,-4)];score=0;buildBricks();items=[];
+}
+function buildBricks(){bricks=[];let bw=(W-40-(cols-1)*6)/cols,bh=20;
+  for(let r=0;r<rows;r++)for(let c2=0;c2<cols;c2++){
+    let x=20+c2*(bw+6),y=40+r*(bh+6);
+    bricks.push({x,y,w:bw,h:bh,alive:true});
+  }
+}
+
+function loop(){
+  ctx.clearRect(0,0,W,H);
+  draw();
+  if(started)update();
+  requestAnimationFrame(loop);
+}
+
+function update(){
+  // 공 업데이트
+  ballList.forEach((ball,idx)=>{
+    ball.x+=ball.vx;ball.y+=ball.vy;
+    if(ball.x<ball.r||ball.x>W-ball.r)ball.vx*=-1;
+    if(ball.y<ball.r)ball.vy*=-1;
+
+    // 바닥
+    if(ball.y>H){
+      if(effects.shield){effects.shield=false;ball.y=H-50;} else {
+        started=false;document.getElementById("overlay").style.display="flex";init();
+      }
+    }
+
+    // 패들 충돌
+    if(ball.y+ball.r>paddle.y && ball.x>paddle.x && ball.x<paddle.x+paddle.w && ball.vy>0){ball.vy*=-1;}
+
+    // 벽돌 충돌
+    bricks.forEach(b=>{
+      if(b.alive && ball.x>b.x && ball.x<b.x+b.w && ball.y>b.y && ball.y<b.y+b.h){
+        b.alive=false;ball.vy*=-1;
+        score += effects.doubleScore ? 20 : 10;
+        if(Math.random()<0.15){items.push({x:b.x+b.w/2,y:b.y,vy:2,type:itemType()});}
+      }
+    });
+  });
+
+  // 아이템 낙하
+  items.forEach(it=>{
+    it.y+=it.vy;
+    if(it.y>paddle.y && it.x>paddle.x && it.x<paddle.x+paddle.w){
+      activate(it.type);
+      it.caught=true;
+    }
+  });
+  items=items.filter(i=>!i.caught && i.y<H+40);
+}
+
+function draw(){
+  // 패들
+  ctx.fillStyle="white";
+  ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+
+  // 공
+  ctx.fillStyle="white";
+  ballList.forEach(ball=>{
+    ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();
+  });
+
+  // 벽돌
+  ctx.fillStyle="#4ade80";
+  bricks.forEach(b=>{if(b.alive)ctx.fillRect(b.x,b.y,b.w,b.h);});
+
+  // 아이템
+  items.forEach(it=>{
+    ctx.fillStyle="yellow";
+    ctx.beginPath();ctx.arc(it.x,it.y,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="black";
+    ctx.font="10px Arial";
+    ctx.textAlign="center";
+    ctx.fillText(it.type[0].toUpperCase(),it.x,it.y+3);
+  });
+
+  // 점수
+  ctx.fillStyle="white";
+  ctx.font="18px Arial";
+  ctx.fillText("Score: "+score,20,22);
+}
+
+window.addEventListener("mousemove",e=>{
+  let r=c.getBoundingClientRect();paddle.x=e.clientX-r.left-paddle.w/2;
+});
+
+function startGame(){if(!started){started=true;document.getElementById("overlay").style.display="none";}}
+window.addEventListener("click",startGame);
+window.addEventListener("keydown",e=>{if(e.code==="Space")startGame();});
+
+init();loop();
+</script>
+</body>
+</html>

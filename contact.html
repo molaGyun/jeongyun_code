@@ -4,10 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2025404042 원정윤 홈페이지</title>
-  <link rel="stylesheet" href="스타일.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <title>Contact - 원정윤</title>
 
+  <!-- 공통 스타일 -->
+  <link rel="stylesheet" href="스타일.css">
+
+  <!-- 아이콘 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
 <body>
@@ -15,34 +18,46 @@
     <h1>원정윤</h1>
     <p class="subtitle">won jeong yun</p>
   </header>
+
   <nav>
     <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
     <a href="about.html"><i class="fa-solid fa-user"></i> About</a>
     <a href="portfolio.html"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
     <a href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
   </nav>
+
   <main class="container">
     <section>
       <h2>Contact</h2>
+
       <ul>
-        <li>이메일: jeongyun000@gmail.com</li>
-        <li>GitHub: jeongyun</li>
-        <li>기타 링크(블로그/노션 등): (여기에 추가)</li>
+        <li>📧 이메일: <strong>jeongyun000@gmail.com</strong></li>
+        <li>🐱 GitHub: <strong>jeongyun</strong></li>
+        <li>🔗 기타 링크(블로그/노션 등): (여기에 추가)</li>
       </ul>
-      <!-- 아래는 정말 기본 예시 폼입니다. JS 없이도 동작하지 않아도 되며, 형태만 제공합니다. -->
+
+      <h3 style="margin-top: 30px;">문의하기</h3>
+
       <form class="contact-form" onsubmit="return false;">
         <label>이름</label>
         <input type="text" placeholder="이름을 입력하세요">
+
         <label>메시지</label>
         <textarea rows="4" placeholder="메시지를 입력하세요"></textarea>
-        <button type="submit">보내기 (동작X, 형태만)</button>
+
+        <button type="submit">보내기 (동작 X)</button>
       </form>
+
     </section>
   </main>
+
   <footer>
     <small>&copy; <span id="year"></span> 이름: 원정윤</small>
   </footer>
-  <script src="script.js"></script>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
 </body>
 
 </html>
